@@ -4,6 +4,8 @@ import java.nio.charset.StandardCharsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
+import models.JobRelevanceResult;
+import models.MessageChatbotResponse;
 import models.PromptResponse;
 import models.ResponseResult;
 
@@ -86,4 +88,50 @@ public class RelevanceChecker {
 
         return -1;
     }
+    public static boolean checkJobApplicationCompletion(String message, String chatbotReply) {
+        HttpClient client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
+
+        MessageChatbotResponse payload = new MessageChatbotResponse(message, chatbotReply);
+        String jsonPayload = new Gson().toJson(payload);
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8002/check-relevance-job"))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("📥 Job Check Status: " + response.statusCode());
+            System.out.println("📥 Response: " + response.body());
+
+            if (response.statusCode() != 200) {
+                System.err.println("❌ Job server error.");
+                return false;
+            }
+
+            JobRelevanceResult result = new Gson().fromJson(response.body(), JobRelevanceResult.class);
+
+            System.out.println("✅ Relevance Score: " + result.relevance_score);
+            System.out.println(result.job_application_completed ? "🎉 Job Application Completed" : "⏳ Job Application Incomplete");
+
+            if (result.reasoning != null && !result.reasoning.isBlank()) {
+                System.out.println("🧠 Reasoning: " + result.reasoning);
+            }
+
+            return result.job_application_completed;
+
+        } catch (JsonSyntaxException e) {
+            System.err.println("❌ JSON parsing error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("❌ HTTP request error: " + e.getMessage());
+        }
+
+        return false;
+    }
+
 }

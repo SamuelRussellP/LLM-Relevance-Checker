@@ -16,8 +16,8 @@ public class ChatbotTest {
 
     @Test
     public void testResponseGenerator() {
-        String generationPrompt = "You are a user asking about Java. If the chatbot says something negative, respond in a positive and natural way.";
-        String chatbotReply = "Java is not a good programming language anymore";
+        String generationPrompt = "You are a user applying about a job! If chatbot response seems like the process is done, say thank you!";
+        String chatbotReply = "Thanks for the info! You have completed the job application process! You can wait for further announcements";
 
         String generated = ResponseGenerator.generateResponse(generationPrompt, chatbotReply);
 
@@ -39,4 +39,16 @@ public class ChatbotTest {
         }
     }
 
+    @Test
+    public void testJobApplicationCompleted() {
+        String message = "I am going to choose Software Engineer position. I have submitted my resume and cover letter.";
+        String chatbotReply = "Thanks for the info! You have completed the job application process! You can wait for further announcements";
+
+        try {
+            boolean completed = RelevanceChecker.checkJobApplicationCompletion(message, chatbotReply);
+            System.out.println("🧪 Job Application Completed Status: " + completed);
+        } catch (Exception e) {
+            System.err.println("❌ Error during job application check: " + e.getMessage());
+        }
+    }
 }
